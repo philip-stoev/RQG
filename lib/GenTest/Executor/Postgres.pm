@@ -198,8 +198,7 @@ sub execute {
 
 sub findStatus {
     my ($self, $state) = @_;
-
-    if ($state eq "22000") {
+    if (($state eq "22000") || ($state eq '08000')) {
 	return STATUS_SERVER_CRASHED;
     } elsif (($state eq '42000') || ($state eq '42601')) {
 	return STATUS_SYNTAX_ERROR;
