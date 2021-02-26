@@ -321,14 +321,17 @@ sub cacheMetaData {
 
     if (not exists $global_schema_cache{$self->dsn()}) {
         say ("Caching schema metadata for ".$self->dsn());
-        foreach my $row (@{$self->getSchemaMetaData()}) {
-            my ($schema, $table, $type, $col, $key) = @$row;
-            $meta->{$schema}={} if not exists $meta->{$schema};
-            $meta->{$schema}->{$type}={} if not exists $meta->{$schema}->{$type};
-            $meta->{$schema}->{$type}->{$table}={} if not exists $meta->{$schema}->{$type}->{$table};
-            $meta->{$schema}->{$type}->{$table}->{$col}=$key;
+        my $raw_metadata = $self->getSchemaMetaData();
+        if (defined $raw_metadata) {
+            foreach my $row (@$raw_metadata) {
+                my ($schema, $table, $type, $col, $key) = @$row;
+                $meta->{$schema}={} if not exists $meta->{$schema};
+                $meta->{$schema}->{$type}={} if not exists $meta->{$schema}->{$type};
+                $meta->{$schema}->{$type}->{$table}={} if not exists $meta->{$schema}->{$type}->{$table};
+                $meta->{$schema}->{$type}->{$table}->{$col}=$key;
+            }
+	    $global_schema_cache{$self->dsn()} = $meta;
         }
-	$global_schema_cache{$self->dsn()} = $meta;
     } else {
 	$meta = $global_schema_cache{$self->dsn()};
     }
