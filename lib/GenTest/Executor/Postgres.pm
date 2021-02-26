@@ -40,6 +40,7 @@ sub init {
 	my $dbh =  DBI->connect($self->dsn(), undef, undef,
                             {
                                 PrintError => 0,
+                                PrintWarn => 0,
                                 RaiseError => 0,
                                 AutoCommit => 1}
         );
