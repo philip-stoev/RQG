@@ -106,8 +106,10 @@ sub execute {
 
     if (defined $dbh->err()) {
         my $errstr = $db.":".$dbh->state().":".$dbh->errstr();
-        say("Query: $query failed: $errstr.") if !$silent;
-        $self->[EXECUTOR_ERROR_COUNTS]->{$errstr}++ if rqg_debug() && !$silent;
+        say("Query: $query failed: $errstr.") if !$silent and not exists $self->[EXECUTOR_ERROR_COUNTS]->{$errstr};
+
+        $self->[EXECUTOR_ERROR_COUNTS]->{$errstr}++;
+
         return GenTest::Result->new(
             query       => $query,
             status      => $self->findStatus($dbh->state()),
@@ -132,8 +134,9 @@ sub execute {
         if (not defined $acceptedErrors{$dbh->state()}) {
             ## Error on EXECUTE
             my $errstr = $db.":".$dbh->state().":".$dbh->errstr();
-	    say("Query: $query failed: $errstr.") if !$silent;
-            $self->[EXECUTOR_ERROR_COUNTS]->{$errstr}++ if rqg_debug() && !$silent;
+	    say("Query: $query failed: $errstr.") if !$silent and not exists $self->[EXECUTOR_ERROR_COUNTS]->{$errstr};
+
+            $self->[EXECUTOR_ERROR_COUNTS]->{$errstr}++;
             return GenTest::Result->new(
                 query       => $query,
                 status      => $self->findStatus($dbh->state()),
