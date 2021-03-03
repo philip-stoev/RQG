@@ -98,13 +98,14 @@ order_by_1_2:
 join_l_o:
 	FROM lineitem, orders |
 	FROM lineitem join_type orders ON ( l_orderkey = o_orderkey ) |
-	FROM lineitem join_type orders ON ( cond_l_o )
+	FROM lineitem join_type orders ON ( cond_multitable_l_o )
 ;
 
 join_l_o_c:
 #	FROM lineitem, orders, customer |
 	FROM lineitem join_type orders ON ( l_orderkey = o_orderkey ) join_type customer ON ( o_custkey = c_custkey ) |
-	FROM lineitem join_type orders ON ( cond_l_o ) join_type customer ON ( o_custkey = c_custkey )
+	FROM lineitem join_type orders ON ( cond_multitable_l_o ) join_type customer ON ( o_custkey = c_custkey ) |
+	FROM lineitem join_type orders ON ( l_orderkey = o_orderkey ) join_type customer ON ( cond_multitable_o_c )
 ;
 
 join_r_n_s_ps_l_o_c:
@@ -196,7 +197,12 @@ field_ps:
 	ps_partkey | ps_suppkey ;
 
 field_l:
-	l_orderkey | l_partkey | l_suppkey | l_linenumber | l_shipDATE | l_commitDATE | l_receiptDATE ;
+	l_orderkey | l_partkey | l_suppkey | l_linenumber | l_shipDATE | l_commitDATE | l_receiptDATE | expr_l ;
+
+expr_l:
+	l_quantity * l_extendedprice
+# |	l_shipdate - l_commitdate # https://github.com/MaterializeInc/materialize/issues/5965
+;
 
 field_o:
 	o_orderkey | o_custkey ;
@@ -235,7 +241,7 @@ where_l_o:
 ;
 
 conds_l_o:
-	cond_l | cond_o | cond_l_o
+	cond_l | cond_o | cond_multitable_l_o
 ;
 
 where_l_o_c:
@@ -244,13 +250,13 @@ where_l_o_c:
 ;
 
 conds_l_o_c:
-	cond_l | cond_o | cond_c | cond_l_o
+	cond_l | cond_o | cond_c | cond_multitable_l_o | cond_multitable_l_o_c
 ;
 
 where_r_n_s_ps_l_o_c:
 	cond_r_n_s_ps_l_o_c and_or cond_r_n_s_ps_l_o_c and_or cond_r_n_s_ps_l_o_c | where_r_n_s_ps_l_o_c and_or cond_r_n_s_ps_l_o_c ;
 cond_r_n_s_ps_l_o_c:
-	cond_r | cond_n | cond_s | cond_ps | cond_l | cond_o | cond_c | cond_l_o | cond_l_o | cond_s_c | cond_ps_l ;
+	cond_r | cond_n | cond_s | cond_ps | cond_l | cond_o | cond_c | cond_multitable_l_o | cond_multitable_l_o | cond_multitable_s_c | cond_multitable_ps_l ;
 
 where_p_ps_s_n_r:
 	cond_p_ps_s_n_r and_or cond_p_ps_s_n_r and_or cond_p_ps_s_n_r | where_p_ps_s_n_r and_or cond_p_ps_s_n_r ;
@@ -281,7 +287,8 @@ currency_having_field:
 
 and_or:
 	AND | AND | AND | AND | AND |
-	AND | AND | AND | AND | OR ;
+	AND | AND | AND | AND | OR
+;
 
 plus_minus:
 	+ | -
@@ -295,7 +302,7 @@ interval_type:
 # Multi-table WHERE conditions
 #
 
-cond_l_o:
+cond_multitable_l_o:
 	l_extendedprice comp_op o_totalprice |
 	lineitem_date_field comp_op o_orderdate |
 	l_extendedprice comp_op MOD (o_totalprice , 5 ) |
@@ -303,10 +310,19 @@ cond_l_o:
 	o_orderdate comp_op lineitem_date_field plus_minus INTERVAL ' _digit interval_type '
 ;
 
-cond_ps_l:
+cond_multitable_l_o_c:
+	c_acctbal comp_op o_totalprice |
+	c_acctbal comp_op l_extendedprice
+;
+
+cond_multitable_o_c:
+        c_acctbal comp_op o_totalprice
+;
+
+cond_multitable_ps_l:
 	ps_availqty comp_op l_quantity | ps_supplycost comp_op l_extendedprice ;
 
-cond_s_c:
+cond_multitable_s_c:
 	c_nationkey comp_op s_nationkey ;
 	
 #
