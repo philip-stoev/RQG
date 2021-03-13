@@ -1,0 +1,10 @@
+On the Postres side:
+
+$ perl gentest.pl -dsn1="dbi:Pg:service=postgres" --threads=10 --grammar=conf/mz/pg-cdc/pg-workload.yy --queries=100000  --seed=time 
+
+On the MZ side:
+
+$ perl gensql.pl --grammar=conf/mz/pg-cdc/mz-workload.yy --queries=100000 | \
+  psql -p 6875 -h 127.0.0.1 -U materialize | grep -v column | grep -v row
+
+
