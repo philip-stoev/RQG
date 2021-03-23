@@ -158,7 +158,18 @@ select_list_l_o_c:
 ;
 
 field_l_o:
-	field_l | field_o
+	field_l | field_o |
+	field_l | field_o |
+	field_l | field_o |
+	field_l | field_o |
+	field_multitable_l_o
+;
+
+field_multitable_l_o:
+	o_totalprice - l_extendedprice
+# |
+#	CONCAT( o_comment , l_comment ) | #  https://github.com/MaterializeInc/materialize/issues/5579
+#	l_shipdate - o_orderdate  # https://github.com/MaterializeInc/materialize/issues/6187
 ;
 
 field_l_o_c:
@@ -290,6 +301,10 @@ and_or:
 	AND | AND | AND | AND | OR
 ;
 
+any_all:
+	ANY | ALL |
+;
+
 plus_minus:
 	+ | -
 ;
@@ -303,6 +318,7 @@ interval_type:
 #
 
 cond_multitable_l_o:
+	o_totalprice - l_extendedprice comp_op 0 |
 	l_extendedprice comp_op o_totalprice |
 	lineitem_date_field comp_op o_orderdate |
 	l_extendedprice comp_op MOD (o_totalprice , 5 ) |
@@ -311,6 +327,7 @@ cond_multitable_l_o:
 ;
 
 cond_multitable_l_o_c:
+	c_acctbal - o_totalprice comp_op 0 |
 	c_acctbal comp_op o_totalprice |
 	c_acctbal comp_op l_extendedprice
 ;
@@ -364,10 +381,18 @@ cond_l:
 
 cond_o:
 	o_orderkey orderkey_clause |
-	o_custkey custkey_clause |
+	cond_o_custkey |
 	o_totalprice currency_clause
 	# https://github.com/MaterializeInc/materialize/issues/5579
 	# | o_comment comment_clause
+;
+
+cond_o_custkey:
+	o_custkey custkey_clause |
+	o_custkey custkey_clause |
+	o_custkey custkey_clause |
+	o_custkey custkey_clause |
+	not EXISTS ( custkey_scalar_subquery )
 ;
 
 cond_c:
@@ -475,7 +500,7 @@ partkey_item:
 	_digit | 200 | 0 ;
 
 partkey_clause_subquery:
-	= ( partkey_scalar_subquery ) |
+	comp_op any_all ( partkey_scalar_subquery ) |
 	not IN ( partkey_subquery )
 ;
 
@@ -530,7 +555,7 @@ orderkey_range:
 	_digit | _tinyint_unsigned ;
 
 orderkey_clause_subquery:
-	= ( orderkey_scalar_subquery ) |
+	comp_op any_all ( orderkey_scalar_subquery ) |
 	not IN ( orderkey_subquery_union )
 ;
 
@@ -575,7 +600,7 @@ custkey_range:
 	_digit | _tinyint_unsigned ;
 
 custkey_clause_subquery:
-	= ( custkey_scalar_subquery ) |
+	comp_op any_all ( custkey_scalar_subquery ) |
 	not IN ( custkey_subquery )
 ;
 
