@@ -15,11 +15,13 @@ use GenTest::Simplifier::Mysqltest;
 my $psql_options = "-p 6875 -h 127.0.0.1 -U materialize";
 my $input_file;
 my $expected_output;
+my $tries = 1;
 
 my $o = GetOptions( 
     'psql-options=s' => \$psql_options,
     'input-file=s' => \$input_file,
-    'expected-output=s' => \$expected_output
+    'expected-output=s' => \$expected_output,
+    'tries=i' => \$tries
 );
 
 die "Usage: perl simplify-psql.pl --psql-options='...' --input-file= --expected-output=...\n" if not defined $input_file or not defined $expected_output;
@@ -43,22 +45,26 @@ my $simplifier = GenTest::Simplifier::Mysqltest->new(
         print ORACLE_PSQL $oracle_psql;
         close ORACLE_PSQL;
 
-        my $psql_start_time = Time::HiRes::time();
         my $psql_cmd = "psql --file $testfile --echo-all $psql_options 2>&1";
-        my $psql_output = `$psql_cmd`;
-        my $psql_duration = Time::HiRes::time() - $psql_start_time;
 
-        open(ORACLE_PSQL_OUT, ">$testfile.out") or die "Unable to open $testfile.out: $!";
-        print ORACLE_PSQL_OUT $psql_output;
-        close(ORACLE_PSQL);
+        foreach my $try (1..$tries) {
+            print $try;
+            my $psql_start_time = Time::HiRes::time();
+            my $psql_output = `$psql_cmd`;
+            my $psql_duration = Time::HiRes::time() - $psql_start_time;
 
-        if ($psql_output =~ m{$expected_output}sgio) {
-            say("Issue repeatable with $testfile.");
-            return ORACLE_ISSUE_STILL_REPEATABLE;
-        } else {
-            say("Issue not repeatable with $testfile.");
-            return ORACLE_ISSUE_NO_LONGER_REPEATABLE;
+            open(ORACLE_PSQL_OUT, ">$testfile.out") or die "Unable to open $testfile.out: $!";
+            print ORACLE_PSQL_OUT $psql_output;
+            close(ORACLE_PSQL);
+
+            if ($psql_output =~ m{$expected_output}sgio) {
+                say("Issue repeatable with $testfile.");
+                return ORACLE_ISSUE_STILL_REPEATABLE;
+            }
         }
+
+        say("Issue not repeatable with $testfile.");
+        return ORACLE_ISSUE_NO_LONGER_REPEATABLE;
     }
 );
 
