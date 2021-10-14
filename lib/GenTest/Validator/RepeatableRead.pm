@@ -35,7 +35,7 @@ use GenTest::Validator;
 
 my @predicates = (
 	'/* no additional predicate */',				# Rerun original query (does not cause bugs)
-	'AND `pk` > -16777216',						# Index scan on PK
+#	'AND `pk` > -16777216',						# Index scan on PK
 #	'AND `int_key` > -16777216',					# Index scan on key
 #	'AND `int_key` > -16777216 ORDER BY `int_key` LIMIT 1000000',	# Falcon LIMIT optimization (broken)
 );
