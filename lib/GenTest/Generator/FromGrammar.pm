@@ -31,7 +31,7 @@ use GenTest::Stack::Stack;
 use GenTest;
 use Cwd;
 
-use constant GENERATOR_MAX_OCCURRENCES	=> 3500;
+use constant GENERATOR_MAX_OCCURRENCES	=> 35000;
 use constant GENERATOR_MAX_LENGTH	=> 10000;
 
 my $field_pos;
@@ -161,8 +161,8 @@ sub next {
 		]});
 
 		if ($#sentence > GENERATOR_MAX_LENGTH) {
-			say("Sentence is now longer than ".GENERATOR_MAX_LENGTH()." symbols. Possible endless loop in grammar. Aborting.");
-			return undef;
+			say("Sentence is now longer than ".GENERATOR_MAX_LENGTH()." symbols. Possible endless loop in grammar. Skipping.");
+			return ["SELECT 1;"]
 		}
 		
 		# Process the current element of @sentence once more, as it was just expanded
