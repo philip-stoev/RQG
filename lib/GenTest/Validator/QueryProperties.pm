@@ -31,8 +31,10 @@ use GenTest::Validator;
 my @properties = (
 	'RESULTSET_HAS_SAME_DATA_IN_EVERY_ROW',
 	'RESULTSET_IS_SINGLE_INTEGER_ONE',
+	'RESULTSET_IS_SINGLE_BOOLEAN_TRUE',
 	'RESULTSET_HAS_ZERO_OR_ONE_ROWS',
 	'RESULTSET_HAS_ONE_ROW',
+	'RESULTSET_HAS_NO_ROWS',
 	'QUERY_IS_REPLICATION_SAFE'
 );
 
@@ -48,6 +50,7 @@ sub validate {
 	my @query_properties = $query =~ m{((?:RESULTSET_|ERROR_|QUERY_).*?)[^A-Z_0-9]}sog;
 
 	return STATUS_WONT_HANDLE if $#query_properties == -1;
+	return STATUS_WONT_HANDLE if $results->[0]->status() != STATUS_OK;
 
 	my $query_status = STATUS_OK;
 
@@ -124,6 +127,16 @@ sub RESULTSET_HAS_ONE_ROW {
 	}
 }
 
+sub RESULTSET_HAS_NO_ROWS {
+	my ($validator, $result) = @_;
+
+	if ($result->rows() != 0) {
+		return STATUS_LENGTH_MISMATCH;
+	} else {
+		return STATUS_OK;
+	}
+}
+
 sub RESULTSET_IS_SINGLE_INTEGER_ONE {
 	my ($validator, $result) = @_;
 	
@@ -138,6 +151,25 @@ sub RESULTSET_IS_SINGLE_INTEGER_ONE {
 	} else {
 		return STATUS_OK;
 	}
+}
+
+sub RESULTSET_IS_SINGLE_BOOLEAN_TRUE {
+        my ($validator, $result) = @_;
+
+        if (
+                (not defined $result->data()) ||
+                ($#{$result->data()} != 0) ||
+                ($result->rows() != 1) ||
+                ($#{$result->data()->[0]} != 0) ||
+                (!$result->data()->[0]->[0])
+        ) {
+                use Data::Dumper;
+                print Dumper $result;
+                die;
+                return STATUS_CONTENT_MISMATCH;
+        } else {
+                return STATUS_OK;
+        }
 }
 
 sub QUERY_IS_REPLICATION_SAFE {
