@@ -8,7 +8,15 @@
 #
 
 thread1_init:
-	DROP TABLE IF EXISTS sum100row; DROP TABLE IF EXISTS avg100table ; CREATE TABLE sum100row (val1 INTEGER, val2 INTEGER) ; CREATE TABLE avg100table (id INTEGER, val1 INTEGER) ; populate_avg100table
+	DROP TABLE IF EXISTS sum100row; DROP TABLE IF EXISTS avg100table ; CREATE TABLE sum100row (val1 INTEGER, val2 INTEGER) ; CREATE DEFAULT INDEX ON sum100row ; CREATE TABLE avg100table (id INTEGER, val1 INTEGER) ; CREATE DEFAULT INDEX ON avg100table ; populate_avg100table ; set_transaction_isolation
+;
+
+query_init:
+    set_transaction_isolation
+;
+
+set_transaction_isolation:
+    SET transaction_isolation=serializable
 ;
 
 query:
